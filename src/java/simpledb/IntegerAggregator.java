@@ -1,11 +1,20 @@
 package simpledb;
 
+import java.util.*;
+
 /**
  * Knows how to compute some aggregate over a set of IntFields.
  */
 public class IntegerAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
+
+    private int gbfield;
+    private Type gbfieldtype;
+    private int afield;
+    private Op what;
+    private Map<Field, Integer> aggregateValues;
+    private Map<Field, Integer> counts;
 
     /**
      * Aggregate constructor
@@ -21,9 +30,13 @@ public class IntegerAggregator implements Aggregator {
      * @param what
      *            the aggregation operator
      */
-
     public IntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
-        // some code goes here
+        this.gbfield = gbfield;
+        this.gbfieldtype = gbfieldtype;
+        this.afield = afield;
+        this.what = what;
+        this.aggregateValues = new HashMap<>();
+        this.counts = new HashMap<>();
     }
 
     /**
@@ -34,7 +47,42 @@ public class IntegerAggregator implements Aggregator {
      *            the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-        // some code goes here
+        Field groupField = gbfield == NO_GROUPING ? null : tup.getField(gbfield);
+        IntField aggregateField = (IntField) tup.getField(afield);
+
+        if (!aggregateValues.containsKey(groupField)) {
+            aggregateValues.put(groupField, 0);
+            counts.put(groupField, 0);
+        }
+
+        int newValue = aggregateField.getValue();
+        int oldValue = aggregateValues.get(groupField);
+        int count = counts.get(groupField);
+
+        switch (what) {
+            case SUM:
+                aggregateValues.put(groupField, oldValue + newValue);
+                break;
+            case MIN:
+                aggregateValues.put(groupField, count == 0 ? newValue : Math.min(oldValue, newValue));
+                break;
+            case MAX:
+                aggregateValues.put(groupField, count == 0 ? newValue : Math.max(oldValue, newValue));
+                break;
+            case AVG:
+                aggregateValues.put(groupField, oldValue + newValue);
+                counts.put(groupField, count + 1);
+                break;
+            case COUNT:
+                aggregateValues.put(groupField, oldValue + 1);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported aggregation operator");
+        }
+
+        if (what != Op.AVG) {
+            counts.put(groupField, count + 1);
+        }
     }
 
     /**
@@ -46,9 +94,30 @@ public class IntegerAggregator implements Aggregator {
      *         the constructor.
      */
     public OpIterator iterator() {
-        // some code goes here
-        throw new
-        UnsupportedOperationException("please implement me for lab2");
+        List<Tuple> tuples = new ArrayList<>();
+        TupleDesc td = gbfield == NO_GROUPING
+                ? new TupleDesc(new Type[] { Type.INT_TYPE })
+                : new TupleDesc(new Type[] { gbfieldtype, Type.INT_TYPE });
+
+        for (Map.Entry<Field, Integer> entry : aggregateValues.entrySet()) {
+            Field groupField = entry.getKey();
+            int aggregateValue = entry.getValue();
+
+            if (what == Op.AVG) {
+                aggregateValue /= counts.get(groupField);
+            }
+
+            Tuple tuple = new Tuple(td);
+            if (gbfield == NO_GROUPING) {
+                tuple.setField(0, new IntField(aggregateValue));
+            } else {
+                tuple.setField(0, groupField);
+                tuple.setField(1, new IntField(aggregateValue));
+            }
+            tuples.add(tuple);
+        }
+
+        return new TupleIterator(td, tuples);
     }
 
 }
