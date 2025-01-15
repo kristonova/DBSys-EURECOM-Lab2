@@ -51,7 +51,6 @@ public class HeapFile implements DbFile {
      */
     public int getId() {
         // some code goes here
-        // throw new UnsupportedOperationException("implement this"); // (?) What to do with this exception?
         return file.getAbsoluteFile().hashCode();
     }
 
@@ -62,7 +61,6 @@ public class HeapFile implements DbFile {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        // throw new UnsupportedOperationException("implement this"); // (?) What to do with this exception?
         return this.td;
     }
 
