@@ -170,7 +170,18 @@ public class BufferPool {
     public  void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
-        // not necessary for lab1
+        int tableId = t.getRecordId().getPageId().getTableId();
+        DbFile file = Database.getCatalog().getDatabaseFile(tableId);
+        if (!(file instanceof HeapFile)) {
+            throw new DbException("Invalid DbFile type. Expected HeapFile.");
+        }
+
+        ArrayList<Page> modifiedPages = ((HeapFile) file).deleteTuple(tid, t);
+
+        for (Page page : modifiedPages) {
+            page.markDirty(true, tid);
+            pageCache.put(page.getId(), page);
+        }
     }
 
     /**
