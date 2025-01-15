@@ -156,11 +156,11 @@ public class Aggregate extends Operator {
         TupleDesc childTd = child.getTupleDesc();
 
         if (gField == Aggregator.NO_GROUPING) {
-            return new TupleDesc(new Type[]{Type.INT_TYPE}, new String[]{aop.toString() + "(" + aggregateFieldName() + ")"});
+            return new TupleDesc(new Type[]{Type.INT_TYPE}, new String[]{aggregateFieldName() == null ? null : aop.toString() + "(" + aggregateFieldName() + ")"});
         } else {
             return new TupleDesc(
                     new Type[]{childTd.getFieldType(gField), Type.INT_TYPE},
-                    new String[]{groupFieldName(), aop.toString() + "(" + aggregateFieldName() + ")"}
+                    new String[]{groupFieldName(), aggregateFieldName() == null ? null : aop.toString() + "(" + aggregateFieldName() + ")"}
             );
         }
     }
