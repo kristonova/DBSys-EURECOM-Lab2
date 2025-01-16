@@ -1,11 +1,22 @@
 package simpledb;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Knows how to compute some aggregate over a set of StringFields.
  */
 public class StringAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
+    private int gbField;
+    private Type gbFieldType;
+    private int aField;
+    private Op operation;
+    private HashMap<Field,Integer> dictGroups;
+
 
     /**
      * Aggregate constructor
@@ -18,14 +29,25 @@ public class StringAggregator implements Aggregator {
 
     public StringAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
         // some code goes here
+        if (what != Op.COUNT) {
+            throw new IllegalArgumentException("Not supported operation for strings");
+        }
+        this.gbField=gbfield;
+        this.gbFieldType=gbfieldtype;
+        this.aField=afield;
+        this.operation=what;
+        this.dictGroups= new HashMap<>();
     }
 
     /**
      * Merge a new tuple into the aggregate, grouping as indicated in the constructor
      * @param tup the Tuple containing an aggregate field and a group-by field
      */
+    @Override
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
+        Field groupKey = (gbField == NO_GROUPING) ? null : tup.getField(gbField);
+        dictGroups.put(groupKey, dictGroups.getOrDefault(groupKey, 0) + 1);
     }
 
     /**
@@ -38,7 +60,27 @@ public class StringAggregator implements Aggregator {
      */
     public OpIterator iterator() {
         // some code goes here
-        throw new UnsupportedOperationException("please implement me for lab2");
+        ArrayList<Tuple> result = new ArrayList<>();
+        TupleDesc td;
+
+        if (gbField == NO_GROUPING) {
+            td = new TupleDesc(new Type[]{Type.INT_TYPE});
+        } else {
+            td = new TupleDesc(new Type[]{gbFieldType, Type.INT_TYPE});
+        }
+
+        for (Map.Entry<Field, Integer> entry : dictGroups.entrySet()) {
+            Tuple tuple = new Tuple(td);
+            if (gbField == NO_GROUPING) {
+                tuple.setField(0, new IntField(entry.getValue()));
+            } else {
+                tuple.setField(0, entry.getKey());
+                tuple.setField(1, new IntField(entry.getValue()));
+            }
+            result.add(tuple);
+        }
+
+        return new TupleArrayIterator(result);
     }
 
 }

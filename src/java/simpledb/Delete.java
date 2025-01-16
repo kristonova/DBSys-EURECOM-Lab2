@@ -9,6 +9,10 @@ import java.io.IOException;
 public class Delete extends Operator {
 
     private static final long serialVersionUID = 1L;
+    private final TransactionId transactionId;
+    private OpIterator child;
+    private boolean deleted;
+    private final TupleDesc tupleDesc;
 
     /**
      * Constructor specifying the transaction that this delete belongs to as
@@ -21,23 +25,35 @@ public class Delete extends Operator {
      */
     public Delete(TransactionId t, OpIterator child) {
         // some code goes here
+        this.transactionId = t;
+        this.child = child;
+        this.deleted = false;
+
+        this.tupleDesc = new TupleDesc(new Type[]{Type.INT_TYPE}, new String[]{"Delete Count"});
     }
 
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        return tupleDesc;
     }
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
+        super.open();
+        child.open();
+        deleted = false;
     }
 
     public void close() {
         // some code goes here
+        super.close();
+        child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
+        child.rewind();
+        deleted = false;
     }
 
     /**
@@ -51,18 +67,44 @@ public class Delete extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        if (deleted) {
+            return null;
+        }
+
+        BufferPool bufferPool = Database.getBufferPool();
+        int counter = 0;
+
+        try {
+            while (child.hasNext()) {
+                Tuple tuple = child.next();
+                bufferPool.deleteTuple(transactionId, tuple);
+                counter++;
+            }
+        } catch (IOException e) {
+            throw new DbException("Error while deleting tuples: " + e.getMessage());
+        }
+
+        deleted = true;
+
+        // Create a result tuple with the count of deleted records
+        Tuple result = new Tuple(tupleDesc);
+        result.setField(0, new IntField(counter));
+        return result;
     }
 
     @Override
     public OpIterator[] getChildren() {
         // some code goes here
-        return null;
+        return new OpIterator[]{child};
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
         // some code goes here
+        if (children.length != 1) {
+            throw new IllegalArgumentException("Expected exactly one child.");
+        }
+        this.child = children[0];
     }
 
 }
