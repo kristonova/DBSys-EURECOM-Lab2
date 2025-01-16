@@ -37,11 +37,7 @@ public class Aggregate extends Operator {
      *            The aggregation operator to use
      */
     public Aggregate(OpIterator child, int afield, int gfield, Aggregator.Op aop) {
-<<<<<<< HEAD
         // some code goes here
-=======
-	// some code goes here
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         this.child=child;
         this.aField=afield;
         this.gField=gfield;
@@ -67,13 +63,8 @@ public class Aggregate extends Operator {
      *         {@link simpledb.Aggregator#NO_GROUPING}
      * */
     public int groupField() {
-<<<<<<< HEAD
         // some code goes here
         return gField;
-=======
-	// some code goes here
-	return gField;
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
     }
 
     /**
@@ -82,11 +73,7 @@ public class Aggregate extends Operator {
      *         null;
      * */
     public String groupFieldName() {
-<<<<<<< HEAD
         // some code goes here
-=======
-	// some code goes here
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         return (gField == Aggregator.NO_GROUPING) ? null : child.getTupleDesc().getFieldName(gField);
     }
 
@@ -94,13 +81,8 @@ public class Aggregate extends Operator {
      * @return the aggregate field
      * */
     public int aggregateField() {
-<<<<<<< HEAD
         // some code goes here
         return aField;
-=======
-	// some code goes here
-	return aField;
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
     }
 
     /**
@@ -108,11 +90,7 @@ public class Aggregate extends Operator {
      *         tuples
      * */
     public String aggregateFieldName() {
-<<<<<<< HEAD
         // some code goes here
-=======
-	// some code goes here
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         return child.getTupleDesc().getFieldName(aField);
     }
 
@@ -120,13 +98,8 @@ public class Aggregate extends Operator {
      * @return return the aggregate operator
      * */
     public Aggregator.Op aggregateOp() {
-<<<<<<< HEAD
         // some code goes here
         return aop;
-=======
-	// some code goes here
-	return aop;
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
@@ -134,11 +107,7 @@ public class Aggregate extends Operator {
     }
 
     public void open() throws NoSuchElementException, DbException,
-<<<<<<< HEAD
             TransactionAbortedException {
-=======
-	    TransactionAbortedException {
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         super.open();
         child.open();
 
@@ -158,11 +127,7 @@ public class Aggregate extends Operator {
      * aggregate. Should return null if there are no more tuples.
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-<<<<<<< HEAD
         // some code goes here
-=======
-	// some code goes here
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         if (iterator == null || !iterator.hasNext()) {
             return null;
         }
@@ -170,11 +135,7 @@ public class Aggregate extends Operator {
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-<<<<<<< HEAD
         // some code goes here
-=======
-	// some code goes here
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         child.rewind();
         iterator.rewind();
     }
@@ -191,11 +152,7 @@ public class Aggregate extends Operator {
      * iterator.
      */
     public TupleDesc getTupleDesc() {
-<<<<<<< HEAD
         // some code goes here
-=======
-	// some code goes here
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         TupleDesc childTd = child.getTupleDesc();
 
         if (gField == Aggregator.NO_GROUPING) {
@@ -209,11 +166,7 @@ public class Aggregate extends Operator {
     }
 
     public void close() {
-<<<<<<< HEAD
         // some code goes here
-=======
-	// some code goes here
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         super.close();
         child.close();
         if (iterator != null) {
@@ -223,22 +176,14 @@ public class Aggregate extends Operator {
 
     @Override
     public OpIterator[] getChildren() {
-<<<<<<< HEAD
         // some code goes here
-=======
-	// some code goes here
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         return new OpIterator[]{child};
         // Despite we know the Aggregate operator has only one child, we maintain the array for consistency
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
-<<<<<<< HEAD
         // some code goes here
-=======
-	// some code goes here
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         this.child=children[0];
     }
 

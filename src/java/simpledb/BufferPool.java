@@ -3,10 +3,6 @@ package simpledb;
 import java.io.*;
 
 import java.util.ArrayList;
-<<<<<<< HEAD
-import java.util.HashMap;
-=======
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -26,10 +22,6 @@ public class BufferPool {
 
     private static int pageSize = DEFAULT_PAGE_SIZE;
 
-    //private final HashMap<PageId,Page> pool;
-    private PageBufferPool pbp;
-
-    //private int freePages;
     /** Default number of pages passed to the constructor. This is used by
      other classes. BufferPool should use the numPages argument to the
      constructor instead. */
@@ -40,9 +32,12 @@ public class BufferPool {
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
+    private final int numPages;
+    private final ConcurrentHashMap<PageId, Page> pageCache;
+
     public BufferPool(int numPages) {
-        // some code goes here
-        pbp = new PageBufferPool(numPages);
+        this.numPages = numPages;
+        this.pageCache = new ConcurrentHashMap<>(numPages);
     }
 
     public static int getPageSize() {
@@ -76,17 +71,15 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
-        // some code goes here
-        if (pbp.containsKey(pid))
-            return pbp.get(pid);
-        else if (pbp.freePages() == 0) {
-            evictPage();
+        Page page = pageCache.get(pid);
+        if (page == null) {
+            page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+            if (pageCache.size() >= numPages) {
+                evictPage();
+            }
+            pageCache.put(pid, page);
         }
-        Page selectedPage = Database.getCatalog()
-                .getDatabaseFile(pid.getTableId())
-                .readPage(pid);
-        pbp.put(pid,selectedPage);
-        return selectedPage;
+        return page;
     }
 
     /**
@@ -151,17 +144,6 @@ public class BufferPool {
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
-<<<<<<< HEAD
-        // not necessary for lab1
-        // just exploit API to to the job
-        ArrayList<Page> pages =  Database.getCatalog()
-                .getDatabaseFile(tableId)
-                .insertTuple(tid, t);
-
-        for (Page page : pages) {
-            page.markDirty(true, tid);
-            pbp.put(page.getId(),page);
-=======
         DbFile file = Database.getCatalog().getDatabaseFile(tableId);
 
         ArrayList<Page> modifiedPages = ((HeapFile) file).insertTuple(tid, t);
@@ -169,7 +151,6 @@ public class BufferPool {
         for (Page page : modifiedPages) {
             page.markDirty(true, tid);
             pageCache.put(page.getId(), page);
->>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         }
     }
 
@@ -189,16 +170,17 @@ public class BufferPool {
     public  void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
-        // not necessary for lab1
         int tableId = t.getRecordId().getPageId().getTableId();
-        // just exploit API to to the job
-        ArrayList<Page> pages = Database.getCatalog()
-                .getDatabaseFile(tableId)
-                .deleteTuple(tid, t);
+        DbFile file = Database.getCatalog().getDatabaseFile(tableId);
+        if (!(file instanceof HeapFile)) {
+            throw new DbException("Invalid DbFile type. Expected HeapFile.");
+        }
 
-        for (Page page: pages){
+        ArrayList<Page> modifiedPages = ((HeapFile) file).deleteTuple(tid, t);
+
+        for (Page page : modifiedPages) {
             page.markDirty(true, tid);
-            pbp.put(page.getId(),page);
+            pageCache.put(page.getId(), page);
         }
     }
 
@@ -210,10 +192,10 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
-        ArrayList<PageId> pids = pbp.getPIDs();
-        for (PageId pid : pids) {
+        for (PageId pid : pageCache.keySet()) {
             flushPage(pid);
         }
+
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -227,7 +209,8 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         // some code goes here
         // not necessary for lab1
-        pbp.remove(pid);
+        pageCache.remove(pid);
+
     }
 
     /**
@@ -237,13 +220,12 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
-        // No pages get actually removed fron BP
-        Page selectedPage = pbp.get(pid);
-        if (selectedPage.isDirty() != null) {
+        Page page = pageCache.get(pid);
+        if (page != null && page.isDirty() != null) {
             DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
-            file.writePage(selectedPage);
+            file.writePage(page);
+            page.markDirty(false, null);
         }
-        selectedPage.markDirty(false,null);
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -259,73 +241,20 @@ public class BufferPool {
      */
     private synchronized  void evictPage() throws DbException {
         // some code goes here
-        // not necessary for
-        // Effectuve removal happens when pbp.remove is called
-        PageId lru = pbp.getLastRecentlyUsed();
-        try {
-            flushPage(lru);
-        }
-        catch (Exception e) {
-            throw new DbException("Flushing page to free space failed");
-        }
-        pbp.remove(lru);
-    }
-
-    // Implements functionalities of a queue, where least-recently used pages
-    // get returned to main BufferPool class
-    // Based on lab1 solution
-    private static class PageBufferPool {
-        // Change type of pageBuffer to not store a page twice
-        private final int capacity;
-        private final ArrayList<PageId> pageBuffer;
-        private final ConcurrentHashMap<PageId, Page> pageIdToPage;
-
-        public PageBufferPool(int size) {
-            this.capacity = size;
-            this.pageBuffer = new ArrayList<>(size);
-            this.pageIdToPage = new ConcurrentHashMap<>(size);
-        }
-
-        public boolean containsKey(PageId id) {
-            return pageIdToPage.containsKey(id);
-        }
-
-        public Page get(PageId id) {
-            return pageIdToPage.get(id);
-        }
-
-        public void put(PageId id, Page page) {
-            pageIdToPage.put(id, page);
-            pageBuffer.add(id);
-        }
-
-        public Page remove(PageId pid) {
-            if (pageIdToPage.containsKey(pid)) {
-                pageBuffer.remove(pid);
-                return pageIdToPage.remove(pid);
+        // not necessary for lab1
+        for (PageId pid : pageCache.keySet()) {
+            Page page = pageCache.get(pid);
+            if (page.isDirty() == null) {
+                try {
+                    flushPage(pid);
+                } catch (IOException e) {
+                    throw new DbException("Error while flushing page: " + e.getMessage());
+                }
+                pageCache.remove(pid);
+                return;
             }
-            return null;
         }
-
-        public int size() {
-            return pageBuffer.size();
-        }
-
-        public int freePages() {
-            return capacity-pageBuffer.size();
-        }
-
-        public PageId removeLastRecentlyUsed() {
-            pageIdToPage.remove(pageBuffer.get(0));
-            return pageBuffer.remove(0);
-        }
-        public PageId getLastRecentlyUsed() {
-            return pageBuffer.get(0);
-        }
-        public ArrayList<PageId> getPIDs() {
-            return pageBuffer;
-        }
+        throw new DbException("All pages are dirty; no clean page available to evict.");
     }
-
-
 }
+
