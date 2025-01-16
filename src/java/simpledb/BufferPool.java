@@ -3,7 +3,10 @@ package simpledb;
 import java.io.*;
 
 import java.util.ArrayList;
+<<<<<<< HEAD
 import java.util.HashMap;
+=======
+>>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -148,6 +151,7 @@ public class BufferPool {
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
+<<<<<<< HEAD
         // not necessary for lab1
         // just exploit API to to the job
         ArrayList<Page> pages =  Database.getCatalog()
@@ -157,6 +161,15 @@ public class BufferPool {
         for (Page page : pages) {
             page.markDirty(true, tid);
             pbp.put(page.getId(),page);
+=======
+        DbFile file = Database.getCatalog().getDatabaseFile(tableId);
+
+        ArrayList<Page> modifiedPages = ((HeapFile) file).insertTuple(tid, t);
+
+        for (Page page : modifiedPages) {
+            page.markDirty(true, tid);
+            pageCache.put(page.getId(), page);
+>>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
         }
     }
 

@@ -85,7 +85,7 @@ public class SeqScan implements OpIterator {
         this.it = dbFile.iterator(tid);
         this.it.open();
 
-        // Create the tupleDesc including the tableAlias
+        // This creates the tupleDesc including the tableAlias
         TupleDesc originalTd = dbFile.getTupleDesc();
         String[] fieldNames = new String[originalTd.numFields()];
         Type[] fieldTypes = new Type[originalTd.numFields()];

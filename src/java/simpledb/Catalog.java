@@ -39,11 +39,7 @@ public class Catalog {
      * conflict exists, use the last table to be added as the table for a given name.
      * @param pkeyField the name of the primary key field
      */
-    // (?) Is the conflict thing ressolved by the dictionary rule for duplicate keys?
-    // (?) if DBFile is an implementation, is it ok to put it here as a parameter? (Creo que simplemente está diciendo
-    // que lo que recibe es cualquier implementacion de DBFile - Ver que ninguna implementacion ha sido desarrollada
-    // antes de que esta parte del código deba estar lista)
-    // (?) Why storing a whole DBFile in the catalog?
+
     public void addTable(DbFile file, String name, String pkeyField) {
         // some code goes here
         if (name==null) throw new IllegalArgumentException("name cannot be null");

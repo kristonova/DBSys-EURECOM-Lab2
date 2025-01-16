@@ -43,6 +43,7 @@ public class JoinPredicate implements Serializable {
     public boolean filter(Tuple t1, Tuple t2) {
         return t1.getField(field1).compare(op, t2.getField(field2));
     }
+<<<<<<< HEAD
 
     public int getField1() {
         return field1;
@@ -52,6 +53,17 @@ public class JoinPredicate implements Serializable {
         return field2;
     }
 
+=======
+    
+    public int getField1() {
+        return field1;
+    }
+    
+    public int getField2() {
+        return field2;
+    }
+    
+>>>>>>> af8a2fba8b044077f6a2572b5143352cbca6f5e2
     public Predicate.Op getOperator() {
         return op;
     }
